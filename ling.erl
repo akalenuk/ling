@@ -46,6 +46,12 @@ clean(String, Dirt) ->
 replace(String, Dirt, Icecream) ->
     join(split(String, Dirt), Icecream).
 
+replace_a_lot(String, []) ->
+    String;
+replace_a_lot(String, [H| T]) ->
+    {Before, After} = H,
+    replace_a_lot( replace(String, Before, After), T).
+
 flatten([]) -> [];
 flatten([H| T]) ->
     case is_list(hd(H)) of
@@ -53,6 +59,16 @@ flatten([H| T]) ->
             [H] ++ flatten(T);
         true ->
             flatten(H) ++ flatten(T)
+    end.
+
+same_shit(A, B) ->
+    case length(A) == length(B) of
+        true ->
+            A_in_B = lists:usort([lists:member(Ai, B) || Ai <- A]) == [true],
+            B_in_A = lists:usort([lists:member(Bi, A) || Bi <- B]) == [true],
+            A_in_B and B_in_A;
+        false ->
+            false
     end.
 
 % rare
@@ -127,6 +143,17 @@ test() ->
 
         replace("dirt and dirty things. <dirt href='dirtydirt'>!", "dirt", "icecream") ==
             "icecream and icecreamy things. <icecream href='icecreamyicecream'>!",
+
+        replace_a_lot("dirt and dirty things. <dirt href='dirtydirt'>!", [
+            {"dirt", "icecream"},
+            {"and", "but"},
+            {"thing", "stuff"},
+            {"href", "src"}
+        ]) == "icecream but icecreamy stuffs. <icecream src='icecreamyicecream'>!",
+
+        same_shit(["1","2","3"], ["3","1","2"]) == true,
+        same_shit(["1","2","3"], ["3","2"]) == false,
+        same_shit(["1","2","3"], ["3","2","2"]) == false,
 
         part("1234567890", 2, -2) == "23456789",
         part("1234567890", 2, 5) == "2345",
