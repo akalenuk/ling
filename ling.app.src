@@ -1,9 +1,0 @@
-{application, ling,
- [
-  {description, "Erlang list-strings routines"},
-  {vsn, "1"},
-  {registered, []},
-  {applications, []},
-  {mod, { ling_app, []}},
-  {env, []}
- ]}.
