@@ -116,6 +116,9 @@ trim_to_first(String, First) ->
             String
     end.
 
+trim_from_last(String, Last) ->
+    lists:reverse(trim_to_first(lists:reverse(String), Last)).
+
 do_with_tokens(String, Fun, []) ->
     Fun(String);
 do_with_tokens(String, Fun, [SeparatorsH | SeparatorsT]) ->
@@ -173,6 +176,9 @@ test() ->
 
         trim_to_first("dirt and dirty things. <dirt href='dirtydirt'>!", "<") ==
             "<dirt href='dirtydirt'>!",
+
+        trim_from_last("dirt and dirty things. <dirt href='dirtydirt'>!", "<") ==
+            "dirt and dirty things. <",
  
         do_with_tokens("Here: http://synrc.com!", fun a_href/1, [" ", ",", "?", "!"]) ==
             "Here: <a href='http://synrc.com'>http://synrc.com</a>!"
