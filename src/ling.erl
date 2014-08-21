@@ -1,3 +1,17 @@
+%   Copyright 2013-2014 Alexandr Kalenuk (akalenuk@gmail.com)
+%
+%   Licensed under the Apache License, Version 2.0 (the "License");
+%   you may not use this file except in compliance with the License.
+%   You may obtain a copy of the License at
+%
+%       http://www.apache.org/licenses/LICENSE-2.0
+%
+%   Unless required by applicable law or agreed to in writing, software
+%   distributed under the License is distributed on an "AS IS" BASIS,
+%   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%   See the License for the specific language governing permissions and
+%   limitations under the License.
+
 -module(ling).
 -compile(export_all).
 -author("akalenuk@gmail.com").
@@ -19,7 +33,7 @@ part([], _, _) ->
     [];
 part(List, From, To) ->
     N = fun(X) ->
-        case X<0 of
+        case X =< 0 of
             true ->
                 XX = length(List) + 1 + X,
                 case XX<1 of
@@ -35,7 +49,7 @@ part(List, From, To) ->
     end,
     RealFrom = N(From),
     RealTo = N(To),
-    case RealTo<RealFrom of
+    case RealTo < RealFrom of
         true -> "";
         false -> string:sub_string(List, N(From), N(To))
     end.
@@ -54,22 +68,48 @@ replace_a_lot(String, [H| T]) ->
 
 flatten([]) -> [];
 flatten([H| T]) ->
-    case is_list(hd(H)) of
-        false ->
-            [H] ++ flatten(T);
-        true ->
-            flatten(H) ++ flatten(T)
+    case H of
+        [] -> flatten(T);
+        _ ->
+            case is_list(hd(H)) of
+                false ->
+                    [H] ++ flatten(T);
+                true ->
+                    flatten(H) ++ flatten(T)
+            end
     end.
 
-same_shit(A, B) ->
-    case length(A) == length(B) of
-        true ->
-            A_in_B = lists:usort([lists:member(Ai, B) || Ai <- A]) == [true],
-            B_in_A = lists:usort([lists:member(Bi, A) || Bi <- B]) == [true],
-            A_in_B and B_in_A;
-        false ->
-            false
+same_set(A, B) ->
+    lists:sort(A) == lists:sort(B).
+
+starts_with(String, Piece) ->
+    part(String, 1, length(Piece)) == Piece.
+
+ends_with(String, Piece) ->
+    part(String, - length(Piece), -1) == Piece.
+
+trim(String) ->
+    trim(String, "\t\n\r ").
+
+trim_left(String) ->
+    trim_left(String, "\t\n\r ").
+
+trim_right(String) ->
+    trim_right(String, "\t\n\r ").
+
+
+trim(String, Garbage) ->
+    trim_right( trim_left(String, Garbage), Garbage).
+
+trim_left([S| Tring], Garbage) ->
+    case lists:member(S, Garbage) of
+        true -> trim_left(Tring, Garbage);
+        false -> [S| Tring]
     end.
+
+trim_right(String, Garbage) ->
+    lists:reverse( trim_left( lists:reverse(String), Garbage ) ).
+
 
 % rare
 replace_in_or_out_brackets(String, Dirt, Icecream, Brackets, InOrOut) ->
@@ -125,12 +165,13 @@ do_with_tokens(String, Fun, [SeparatorsH | SeparatorsT]) ->
     join([do_with_tokens(S, Fun, SeparatorsT) || S <- split(String, SeparatorsH)], SeparatorsH).
 
 a_href(String) ->
-    case part(String, 1, 7) == "http://" of 
+    case starts_with(String, "http://") of
         true ->
             "<a href='" ++ String ++ "'>" ++ String ++ "</a>";
         false ->
             String
     end.
+
 
 test() ->
     [
@@ -153,10 +194,18 @@ test() ->
             {"thing", "stuff"},
             {"href", "src"}
         ]) == "icecream but icecreamy stuffs. <icecream src='icecreamyicecream'>!",
+        
+        same_set(["1","2","3"], ["3","1","2"]) == true,
+        same_set(["1","2","3"], ["3","2"]) == false,
+        same_set(["1","2","3"], ["3","2","2"]) == false,
 
-        same_shit(["1","2","3"], ["3","1","2"]) == true,
-        same_shit(["1","2","3"], ["3","2"]) == false,
-        same_shit(["1","2","3"], ["3","2","2"]) == false,
+        starts_with("Longword", "Long") == true,
+        starts_with("Longword", "ord") == false,
+        ends_with("Longword", "word") == true,
+        ends_with("Longword", "ong") == false,
+
+        trim("\tsome text  ") == "some text",
+        trim("\tsome text  ", " t") == "\tsome tex",
 
         part("1234567890", 2, -2) == "23456789",
         part("1234567890", 2, 5) == "2345",
